@@ -26,7 +26,9 @@ void Sender_FromLowerLayer_GBN(struct packet *pkt);
 void Sender_FromUpperLayer_GBN(struct message *msg);
 
 /* GBK滑动窗口允许的最大同时发包数 */
-static uint slide_window_number = 16;
+static uint slide_window_number = 6;
+/* 默认超时时间 */
+static double out_time = 0.1;
 /**
  * 当前滑窗第一个pkt的id 也即首个未确认的pkt的id
  * 注意：pkt id是**1base**的
@@ -51,8 +53,7 @@ static uint hash_value_size = 8;
 static uint length_size = 1;
 static uint pkt_id_size = 4;
 static uint max_payload_size = RDT_PKTSIZE - hash_value_size - length_size - pkt_id_size;
-/* 默认超时时间 */
-static double out_time = 0.3;
+
 
 /* sender initialization, called once at the very beginning */
 void Sender_Init()
@@ -61,6 +62,11 @@ void Sender_Init()
     base = 1;
     next_create_id = 1;
     next_send_id = 1;
+}
+
+void get_sender_status()
+{
+    printf("sender: base %u, next_send_id %u, next_create_id %u\n", base, next_send_id, next_create_id);
 }
 
 /* sender finalization, called once at the very end.
@@ -190,6 +196,10 @@ void Sender_FromLowerLayer_GBN(struct packet *pkt)
         {
             Sender_StopTimer();
         }
+        else
+        {
+            Sender_StartTimer(out_time);
+        }
 
         if (ack_pktid > base - 1)
         {
@@ -205,16 +215,21 @@ void Sender_FromLowerLayer_GBN(struct packet *pkt)
             {
                 next_send_id = base;
             }
+            // 补满
+            fullfill_windows();
         }
     }
 }
 
 void Sender_Timeout_GBN()
 {
+
+    // 重发未确认的包数量
+    uint pkt_num = next_send_id - base;
+    if(pkt_num>0){
     // 重启timer
     Sender_StartTimer(out_time);
-    // 重发未确认的包
-    uint pkt_num = next_send_id - base;
+    }
     for (uint i = 0; i < pkt_num; ++i)
     {
         Sender_ToLowerLayer(pkt_list[i]);

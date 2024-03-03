@@ -14,7 +14,7 @@ namespace rdt_utils
 
     std::string create_ack_content(uint pkt_id)
     {
-        std::string result(12, char(0));
+        std::string result(12, '0');
         *(reinterpret_cast<uint *>(result.data())) = pkt_id;
         uint64_t hash_value = create_hash_value(result.data(), 4);
         *(reinterpret_cast<uint64_t *>(result.data() + 4)) = hash_value;
@@ -63,10 +63,10 @@ namespace rdt_utils
     bool create_payload_pkt(struct packet *result_pkt, uint8_t len, uint32_t pkt_id, char *payload)
     {
         memcpy((result_pkt->data) + 8, &len, 1);
-        memcpy((result_pkt->data)+9,&pkt_id,4);
-        memcpy((result_pkt->data)+13,payload,len);
-        uint64_t hash_value=create_hash_value((result_pkt->data) + 8,len+5);
-        memcpy(result_pkt->data,&hash_value,8);
+        memcpy((result_pkt->data) + 9, &pkt_id, 4);
+        memcpy((result_pkt->data) + 13, payload, len);
+        uint64_t hash_value = create_hash_value((result_pkt->data) + 8, len + 5);
+        memcpy(result_pkt->data, &hash_value, 8);
         return true;
     }
 }

@@ -37,6 +37,11 @@ static uint expected_seqnum;
 static std::string ack_content;
 static uint ack_content_size = 12;
 
+void get_receiver_status()
+{
+    printf("receiver: expected_seqnum %u\n",expected_seqnum);
+}
+
 /* receiver initialization, called once at the very beginning */
 void Receiver_Init()
 {
@@ -107,7 +112,7 @@ void Receiver_FromLowerLayer_GBN(struct packet *pkt)
         expected_seqnum += 1;
         ack_content = rdt_utils::create_ack_content(expected_seqnum - 1);
         /*发送ack报文*/
-        memcpy(pkt->data, ack_content.data(), ack_content_size);
+        memcpy(ack_pkt.data, ack_content.data(), ack_content_size);
         Receiver_ToLowerLayer(&ack_pkt);
 
         /*释放空间*/
@@ -118,7 +123,7 @@ void Receiver_FromLowerLayer_GBN(struct packet *pkt)
     {
         /* 其他情况，存在问题*/
         /* 重发一次上一个id的ack报文*/
-        memcpy(pkt->data, ack_content.data(), ack_content_size);
+        memcpy(ack_pkt.data, ack_content.data(), ack_content_size);
         Receiver_ToLowerLayer(&ack_pkt);
     }
 }
